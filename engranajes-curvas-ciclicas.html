@@ -1,0 +1,1364 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Engranajes & Curvas Cíclicas — Atelier Geométrico</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1a1814;
+    --paper: #f4ede0;
+    --paper-deep: #ebe1cf;
+    --accent: #b4382a;
+    --accent-2: #2c5f5d;
+    --gold: #a88438;
+    --grid: rgba(26, 24, 20, 0.08);
+    --rule: rgba(26, 24, 20, 0.15);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 17px;
+    line-height: 1.55;
+    background-image:
+      radial-gradient(circle at 20% 20%, rgba(168, 132, 56, 0.06) 0%, transparent 40%),
+      radial-gradient(circle at 80% 80%, rgba(44, 95, 93, 0.05) 0%, transparent 40%);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.1 0 0 0 0 0.09 0 0 0 0 0.08 0 0 0 0.18 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    opacity: 0.4;
+    pointer-events: none;
+    z-index: 1;
+    mix-blend-mode: multiply;
+  }
+
+  .container { position: relative; z-index: 2; max-width: 1320px; margin: 0 auto; padding: 48px 32px 80px; }
+
+  header { border-bottom: 1px solid var(--rule); padding-bottom: 32px; margin-bottom: 40px; position: relative; }
+
+  .meta-top {
+    display: flex; justify-content: space-between; align-items: baseline;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--ink); opacity: 0.6; margin-bottom: 24px;
+  }
+
+  h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 700; font-style: italic;
+    font-size: clamp(48px, 7vw, 92px);
+    line-height: 0.95; letter-spacing: -0.02em;
+  }
+
+  h1 .amp { color: var(--accent); font-weight: 400; font-style: italic; }
+  h1 .small { display: block; font-size: 0.4em; font-style: normal; font-weight: 400;
+    letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink); opacity: 0.7; margin-top: 12px; }
+
+  .subtitle {
+    margin-top: 24px; font-size: 19px; font-style: italic; max-width: 680px;
+    color: var(--ink); opacity: 0.85;
+  }
+
+  .ornament {
+    display: flex; align-items: center; gap: 12px; margin-top: 24px;
+    font-family: 'JetBrains Mono', monospace; font-size: 10px;
+    letter-spacing: 0.3em; text-transform: uppercase;
+  }
+  .ornament::before, .ornament::after { content: ''; height: 1px; background: var(--ink); flex: 0 0 40px; opacity: 0.4; }
+  .ornament::after { flex: 1; }
+
+  /* ——— Tabs ——— */
+  .tabs {
+    display: flex; flex-wrap: wrap; gap: 0; margin-bottom: 32px;
+    border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule);
+  }
+  .tab {
+    flex: 1; min-width: 160px; padding: 18px 16px; background: transparent;
+    border: none; cursor: pointer; font-family: 'Cormorant Garamond', serif;
+    font-size: 17px; font-style: italic; color: var(--ink);
+    border-right: 1px solid var(--rule); transition: all 0.3s ease;
+    position: relative; opacity: 0.55;
+  }
+  .tab:last-child { border-right: none; }
+  .tab:hover { background: rgba(180, 56, 42, 0.04); opacity: 0.85; }
+  .tab.active { opacity: 1; background: var(--paper-deep); }
+  .tab.active::after {
+    content: ''; position: absolute; bottom: -1px; left: 0; right: 0; height: 2px;
+    background: var(--accent);
+  }
+  .tab .num {
+    font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 0.2em;
+    display: block; margin-bottom: 4px; opacity: 0.6;
+  }
+
+  /* ——— Panels ——— */
+  .panel { display: none; }
+  .panel.active { display: block; animation: fadeIn 0.5s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  .layout {
+    display: grid; grid-template-columns: 1fr 320px; gap: 40px;
+    align-items: start;
+  }
+  @media (max-width: 980px) { .layout { grid-template-columns: 1fr; } }
+
+  .stage {
+    background: var(--paper-deep);
+    border: 1px solid var(--rule);
+    aspect-ratio: 1 / 1;
+    position: relative; overflow: hidden;
+  }
+  .stage canvas { width: 100%; height: 100%; display: block; }
+
+  .stage-label {
+    position: absolute; top: 16px; left: 20px;
+    font-family: 'JetBrains Mono', monospace; font-size: 10px;
+    letter-spacing: 0.2em; text-transform: uppercase;
+    opacity: 0.5;
+  }
+
+  .stage-formula {
+    position: absolute; bottom: 16px; right: 20px;
+    font-family: 'Cormorant Garamond', serif; font-style: italic;
+    font-size: 14px; opacity: 0.7; text-align: right;
+    line-height: 1.4;
+  }
+
+  .controls h2 {
+    font-family: 'Cormorant Garamond', serif; font-style: italic; font-weight: 600;
+    font-size: 28px; margin-bottom: 6px; letter-spacing: -0.01em;
+  }
+  .controls .lead {
+    font-size: 14px; font-style: italic; opacity: 0.75; margin-bottom: 20px;
+    padding-bottom: 16px; border-bottom: 1px solid var(--rule);
+  }
+
+  .control-group { margin-bottom: 22px; }
+  .control-label {
+    display: flex; justify-content: space-between; align-items: baseline;
+    font-family: 'JetBrains Mono', monospace; font-size: 10px;
+    letter-spacing: 0.18em; text-transform: uppercase; opacity: 0.7;
+    margin-bottom: 8px;
+  }
+  .control-label .val { font-size: 13px; font-family: 'Cormorant Garamond', serif;
+    font-style: italic; letter-spacing: 0; text-transform: none; color: var(--accent);
+    font-weight: 600; }
+
+  input[type="range"] {
+    width: 100%; -webkit-appearance: none; height: 2px; background: var(--ink);
+    opacity: 0.3; outline: none; margin: 6px 0;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 14px; height: 14px; background: var(--accent);
+    cursor: pointer; border-radius: 0; transform: rotate(45deg);
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 14px; height: 14px; background: var(--accent); cursor: pointer;
+    border: none; border-radius: 0;
+  }
+
+  .btn-row { display: flex; gap: 8px; margin-bottom: 24px; }
+  .btn {
+    flex: 1; padding: 10px 12px; background: transparent; border: 1px solid var(--ink);
+    color: var(--ink); cursor: pointer; font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase;
+    transition: all 0.2s ease;
+  }
+  .btn:hover { background: var(--ink); color: var(--paper); }
+  .btn.primary { background: var(--ink); color: var(--paper); }
+  .btn.primary:hover { background: var(--accent); border-color: var(--accent); }
+
+  .legend {
+    margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--rule);
+    font-size: 14px; line-height: 1.6;
+  }
+  .legend-item { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .legend-swatch { width: 20px; height: 2px; flex-shrink: 0; }
+  .legend-item em { opacity: 0.75; }
+
+  .note {
+    margin-top: 24px; padding: 16px 18px; background: var(--paper);
+    border-left: 2px solid var(--gold); font-size: 14.5px; font-style: italic;
+    line-height: 1.5;
+  }
+  .note strong { font-style: normal; font-weight: 600; color: var(--accent); }
+
+  /* radio group */
+  .radio-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 18px; }
+  .radio-option {
+    display: flex; align-items: center; gap: 10px; padding: 8px 12px;
+    border: 1px solid var(--rule); cursor: pointer; transition: all 0.2s;
+    font-size: 14px;
+  }
+  .radio-option:hover { background: var(--paper); }
+  .radio-option.active { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .radio-option input { display: none; }
+  .radio-option .marker {
+    width: 8px; height: 8px; border: 1px solid currentColor; flex-shrink: 0;
+    transform: rotate(45deg);
+  }
+  .radio-option.active .marker { background: var(--accent); border-color: var(--accent); }
+
+  footer {
+    margin-top: 80px; padding-top: 24px; border-top: 1px solid var(--rule);
+    display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+    font-family: 'JetBrains Mono', monospace; font-size: 10px;
+    letter-spacing: 0.18em; text-transform: uppercase; opacity: 0.6;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<header>
+  <div class="meta-top">
+    <span>Atelier Géométrique · Vol. I</span>
+    <span>Maximática · La Matanza</span>
+  </div>
+  <h1>
+    Engranajes <span class="amp">&</span> curvas
+    <span class="small">Cicloide · Hipocicloide · Epicicloide · Envolvente</span>
+  </h1>
+  <p class="subtitle">Una exploración interactiva de la geometría que gobierna la transmisión de movimiento entre dos ruedas dentadas — desde la rodadura pura hasta la ley fundamental del engrane.</p>
+  <div class="ornament">Cuatro estudios animados en tiempo real</div>
+</header>
+
+<nav class="tabs" role="tablist">
+  <button class="tab active" data-panel="cycloid"><span class="num">I</span>Cicloide</button>
+  <button class="tab" data-panel="epi"><span class="num">II</span>Epicicloide</button>
+  <button class="tab" data-panel="hypo"><span class="num">III</span>Hipocicloide</button>
+  <button class="tab" data-panel="involute"><span class="num">IV</span>Envolvente</button>
+  <button class="tab" data-panel="gears"><span class="num">V</span>Engrane</button>
+</nav>
+
+<!-- ============ I. CICLOIDE ============ -->
+<section class="panel active" id="panel-cycloid">
+  <div class="layout">
+    <div class="stage">
+      <div class="stage-label">Estudio I — Rodadura sobre recta</div>
+      <canvas id="cv-cycloid"></canvas>
+      <div class="stage-formula">
+        x(θ) = r(θ − sin θ)<br>
+        y(θ) = r(1 − cos θ)
+      </div>
+    </div>
+    <aside class="controls">
+      <h2>La cicloide</h2>
+      <p class="lead">Trayectoria de un punto fijo sobre el borde de un círculo que rueda sin deslizar a lo largo de una recta.</p>
+
+      <div class="control-group">
+        <label class="control-label">Radio del círculo <span class="val" id="v-cyc-r">40</span></label>
+        <input type="range" id="cyc-r" min="20" max="80" value="40">
+      </div>
+      <div class="control-group">
+        <label class="control-label">Velocidad <span class="val" id="v-cyc-s">1.0×</span></label>
+        <input type="range" id="cyc-s" min="0" max="30" value="10">
+      </div>
+
+      <div class="btn-row">
+        <button class="btn primary" id="cyc-play">⏸ Pausa</button>
+        <button class="btn" id="cyc-reset">↺ Reiniciar</button>
+      </div>
+
+      <div class="legend">
+        <div class="legend-item"><span class="legend-swatch" style="background: #1a1814;"></span><span>Círculo generador</span></div>
+        <div class="legend-item"><span class="legend-swatch" style="background: #b4382a;"></span><span>Trazo de la cicloide</span></div>
+        <div class="legend-item"><span class="legend-swatch" style="background: #2c5f5d;"></span><span>Radio al punto trazado</span></div>
+      </div>
+
+      <div class="note">
+        Observá cómo la <strong>normal</strong> al trazo en cada instante pasa por el <em>punto de contacto</em> entre el círculo y la recta — la base de la ley fundamental del engrane.
+      </div>
+    </aside>
+  </div>
+</section>
+
+<!-- ============ II. EPICICLOIDE ============ -->
+<section class="panel" id="panel-epi">
+  <div class="layout">
+    <div class="stage">
+      <div class="stage-label">Estudio II — Rodadura externa</div>
+      <canvas id="cv-epi"></canvas>
+      <div class="stage-formula">
+        x = (R+r)cos θ − r cos((R+r)θ/r)<br>
+        y = (R+r)sin θ − r sin((R+r)θ/r)
+      </div>
+    </div>
+    <aside class="controls">
+      <h2>La epicicloide</h2>
+      <p class="lead">Un círculo móvil rueda <em>por fuera</em> de un círculo fijo. Es la curva de la cabeza del diente cicloidal.</p>
+
+      <div class="control-group">
+        <label class="control-label">Radio fijo R <span class="val" id="v-epi-R">90</span></label>
+        <input type="range" id="epi-R" min="60" max="140" value="90">
+      </div>
+      <div class="control-group">
+        <label class="control-label">Radio móvil r <span class="val" id="v-epi-r">30</span></label>
+        <input type="range" id="epi-r" min="15" max="80" value="30">
+      </div>
+      <div class="control-group">
+        <label class="control-label">Velocidad <span class="val" id="v-epi-s">1.0×</span></label>
+        <input type="range" id="epi-s" min="0" max="30" value="10">
+      </div>
+
+      <div class="btn-row">
+        <button class="btn primary" id="epi-play">⏸ Pausa</button>
+        <button class="btn" id="epi-reset">↺ Reiniciar</button>
+      </div>
+
+      <div class="legend">
+        <div class="legend-item"><span class="legend-swatch" style="background: #2c5f5d;"></span><span>Círculo fijo (radio R)</span></div>
+        <div class="legend-item"><span class="legend-swatch" style="background: #1a1814;"></span><span>Círculo móvil (radio r)</span></div>
+        <div class="legend-item"><span class="legend-swatch" style="background: #b4382a;"></span><span>Trazo (epicicloide)</span></div>
+      </div>
+
+      <div class="note">
+        Cuando R/r es entero, la curva se cierra en R/r cúspides. Probá <strong>R = 120, r = 30</strong> para una astroide invertida de 4 puntas.
+      </div>
+    </aside>
+  </div>
+</section>
+
+<!-- ============ III. HIPOCICLOIDE ============ -->
+<section class="panel" id="panel-hypo">
+  <div class="layout">
+    <div class="stage">
+      <div class="stage-label">Estudio III — Rodadura interna</div>
+      <canvas id="cv-hypo"></canvas>
+      <div class="stage-formula">
+        x = (R−r)cos θ + r cos((R−r)θ/r)<br>
+        y = (R−r)sin θ − r sin((R−r)θ/r)
+      </div>
+    </div>
+    <aside class="controls">
+      <h2>La hipocicloide</h2>
+      <p class="lead">Un círculo móvil rueda <em>por dentro</em> de un círculo fijo. Es la curva del pie del diente cicloidal.</p>
+
+      <div class="control-group">
+        <label class="control-label">Radio fijo R <span class="val" id="v-hyp-R">120</span></label>
+        <input type="range" id="hyp-R" min="80" max="160" value="120">
+      </div>
+      <div class="control-group">
+        <label class="control-label">Radio móvil r <span class="val" id="v-hyp-r">30</span></label>
+        <input type="range" id="hyp-r" min="10" max="80" value="30">
+      </div>
+      <div class="control-group">
+        <label class="control-label">Velocidad <span class="val" id="v-hyp-s">1.0×</span></label>
+        <input type="range" id="hyp-s" min="0" max="30" value="10">
+      </div>
+
+      <div class="btn-row">
+        <button class="btn primary" id="hyp-play">⏸ Pausa</button>
+        <button class="btn" id="hyp-reset">↺ Reiniciar</button>
+      </div>
+
+      <div class="legend">
+        <div class="legend-item"><span class="legend-swatch" style="background: #2c5f5d;"></span><span>Círculo fijo (radio R)</span></div>
+        <div class="legend-item"><span class="legend-swatch" style="background: #1a1814;"></span><span>Círculo móvil (radio r)</span></div>
+        <div class="legend-item"><span class="legend-swatch" style="background: #b4382a;"></span><span>Trazo (hipocicloide)</span></div>
+      </div>
+
+      <div class="note">
+        Caso notable de <strong>Cardano</strong>: si r = R/2, la hipocicloide degenera en un <em>diámetro</em> — un mecanismo para convertir rotación en traslación rectilínea pura.
+      </div>
+    </aside>
+  </div>
+</section>
+
+<!-- ============ IV. ENVOLVENTE ============ -->
+<section class="panel" id="panel-involute">
+  <div class="layout">
+    <div class="stage">
+      <div class="stage-label">Estudio IV — Hilo desenrollándose</div>
+      <canvas id="cv-inv"></canvas>
+      <div class="stage-formula">
+        x = r_b (cos t + t sin t)<br>
+        y = r_b (sin t − t cos t)
+      </div>
+    </div>
+    <aside class="controls">
+      <h2>La envolvente</h2>
+      <p class="lead">Trayectoria del extremo de un hilo tenso que se desenrolla de un círculo base. Es el perfil estándar de la industria moderna.</p>
+
+      <div class="control-group">
+        <label class="control-label">Radio base r_b <span class="val" id="v-inv-r">60</span></label>
+        <input type="range" id="inv-r" min="30" max="100" value="60">
+      </div>
+      <div class="control-group">
+        <label class="control-label">Velocidad <span class="val" id="v-inv-s">1.0×</span></label>
+        <input type="range" id="inv-s" min="0" max="30" value="10">
+      </div>
+
+      <div class="btn-row">
+        <button class="btn primary" id="inv-play">⏸ Pausa</button>
+        <button class="btn" id="inv-reset">↺ Reiniciar</button>
+      </div>
+
+      <div class="legend">
+        <div class="legend-item"><span class="legend-swatch" style="background: #2c5f5d;"></span><span>Círculo base</span></div>
+        <div class="legend-item"><span class="legend-swatch" style="background: #1a1814;"></span><span>Hilo tenso (tangente)</span></div>
+        <div class="legend-item"><span class="legend-swatch" style="background: #b4382a;"></span><span>Trazo (envolvente)</span></div>
+      </div>
+
+      <div class="note">
+        La <strong>función involuta</strong> inv(α) = tan α − α es la columna vertebral del cálculo dimensional de engranajes en toda la ingeniería mecánica desde mediados del siglo XIX.
+      </div>
+    </aside>
+  </div>
+</section>
+
+<!-- ============ V. ENGRANE ============ -->
+<section class="panel" id="panel-gears">
+  <div class="layout">
+    <div class="stage">
+      <div class="stage-label">Estudio V — Dos ruedas en contacto</div>
+      <canvas id="cv-gears"></canvas>
+      <div class="stage-formula" id="gears-formula">
+        Línea de acción tangente a los círculos base<br>
+        i = z₂ / z₁ = constante
+      </div>
+    </div>
+    <aside class="controls">
+      <h2>El engrane</h2>
+      <p class="lead">Compará en vivo cómo dos ruedas transmiten movimiento según el perfil elegido.</p>
+
+      <div class="radio-group">
+        <label class="radio-option active" data-profile="involute">
+          <input type="radio" name="profile" value="involute" checked>
+          <span class="marker"></span>Perfil de envolvente
+        </label>
+        <label class="radio-option" data-profile="cycloidal">
+          <input type="radio" name="profile" value="cycloidal">
+          <span class="marker"></span>Perfil cicloidal
+        </label>
+      </div>
+
+      <div class="control-group">
+        <label class="control-label">Dientes piñón z₁ <span class="val" id="v-z1">14</span></label>
+        <input type="range" id="z1" min="10" max="24" value="14">
+      </div>
+      <div class="control-group">
+        <label class="control-label">Dientes corona z₂ <span class="val" id="v-z2">22</span></label>
+        <input type="range" id="z2" min="14" max="36" value="22">
+      </div>
+      <div class="control-group">
+        <label class="control-label">Ángulo de presión α <span class="val" id="v-alpha">20°</span></label>
+        <input type="range" id="alpha" min="14" max="30" value="20">
+      </div>
+      <div class="control-group">
+        <label class="control-label">Velocidad <span class="val" id="v-gs">1.0×</span></label>
+        <input type="range" id="gs" min="0" max="30" value="10">
+      </div>
+
+      <div class="btn-row">
+        <button class="btn primary" id="gears-play">⏸ Pausa</button>
+        <button class="btn" id="gears-reset">↺ Reiniciar</button>
+      </div>
+
+      <div class="legend">
+        <div class="legend-item"><span class="legend-swatch" style="background: #1a1814;"></span><span>Dientes</span></div>
+        <div class="legend-item"><span class="legend-swatch" style="background: #b4382a;"></span><span>Línea de acción</span></div>
+        <div class="legend-item"><span class="legend-swatch" style="background: #a88438;"></span><span>Círculos primitivos</span></div>
+        <div class="legend-item"><span class="legend-swatch" style="background: #2c5f5d;"></span><span>Círculos base / generador</span></div>
+      </div>
+
+      <div class="note" id="gears-note">
+        En el perfil de <strong>envolvente</strong>, la línea de acción es una <em>recta fija</em> tangente a ambos círculos base. La normal al contacto pasa siempre por el punto primitivo P — ley fundamental satisfecha.
+      </div>
+    </aside>
+  </div>
+</section>
+
+<footer>
+  <span>© Atelier Geométrico · Material didáctico</span>
+  <span>5° año · Análisis Matemático aplicado</span>
+</footer>
+
+</div>
+
+<script>
+// ——————————————————————————————————————————————
+//  Helpers
+// ——————————————————————————————————————————————
+const TAU = Math.PI * 2;
+
+function setupCanvas(canvas) {
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  return { ctx, w: rect.width, h: rect.height };
+}
+
+function drawGrid(ctx, w, h, spacing = 24) {
+  ctx.strokeStyle = 'rgba(26,24,20,0.05)';
+  ctx.lineWidth = 1;
+  for (let x = 0; x < w; x += spacing) {
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+  }
+  for (let y = 0; y < h; y += spacing) {
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+  }
+}
+
+const COLORS = {
+  ink: '#1a1814',
+  paper: '#f4ede0',
+  accent: '#b4382a',
+  accent2: '#2c5f5d',
+  gold: '#a88438'
+};
+
+// ——————————————————————————————————————————————
+//  Tab navigation
+// ——————————————————————————————————————————————
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    const panel = document.getElementById('panel-' + tab.dataset.panel);
+    panel.classList.add('active');
+    // Resize canvases on tab show
+    setTimeout(() => {
+      const cv = panel.querySelector('canvas');
+      if (cv) resizeAll();
+    }, 50);
+  });
+});
+
+// ——————————————————————————————————————————————
+//  Generic Animator
+// ——————————————————————————————————————————————
+class Anim {
+  constructor(canvas, drawFn) {
+    this.canvas = canvas;
+    this.draw = drawFn;
+    this.t = 0;
+    this.speed = 1;
+    this.running = true;
+    this.last = performance.now();
+    this.loop = this.loop.bind(this);
+    requestAnimationFrame(this.loop);
+  }
+  loop(now) {
+    const dt = Math.min((now - this.last) / 1000, 0.05);
+    this.last = now;
+    if (this.running) this.t += dt * this.speed;
+    this.draw(this.t);
+    requestAnimationFrame(this.loop);
+  }
+  reset() { this.t = 0; }
+  toggle() { this.running = !this.running; }
+}
+
+// ——————————————————————————————————————————————
+//  I. CICLOIDE
+// ——————————————————————————————————————————————
+let cycR = 40;
+const cycCanvas = document.getElementById('cv-cycloid');
+const cycAnim = new Anim(cycCanvas, (t) => {
+  const { ctx, w, h } = setupCanvas(cycCanvas);
+  ctx.fillStyle = 'transparent'; ctx.clearRect(0, 0, w, h);
+  drawGrid(ctx, w, h);
+
+  const r = cycR;
+  const baseY = h * 0.65;
+  const startX = 60;
+  const endX = w - 60;
+  const span = endX - startX;
+  const totalAngle = span / r;
+
+  // Continuous animation - wrap around
+  const angle = (t * 0.8) % totalAngle;
+
+  // Ground line
+  ctx.strokeStyle = COLORS.ink;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(startX - 20, baseY);
+  ctx.lineTo(endX + 20, baseY);
+  ctx.stroke();
+
+  // Ground hatching
+  ctx.strokeStyle = 'rgba(26,24,20,0.3)';
+  ctx.lineWidth = 0.5;
+  for (let x = startX - 20; x < endX + 20; x += 8) {
+    ctx.beginPath();
+    ctx.moveTo(x, baseY);
+    ctx.lineTo(x - 6, baseY + 8);
+    ctx.stroke();
+  }
+
+  // Cycloid trace (full curve faded + active part bold)
+  ctx.strokeStyle = 'rgba(180,56,42,0.25)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  for (let a = 0; a <= totalAngle; a += 0.02) {
+    const px = startX + r * a - r * Math.sin(a);
+    const py = baseY - r + r * Math.cos(a);
+    if (a === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+  }
+  ctx.stroke();
+
+  // Active trace
+  ctx.strokeStyle = COLORS.accent;
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  for (let a = 0; a <= angle; a += 0.02) {
+    const px = startX + r * a - r * Math.sin(a);
+    const py = baseY - r + r * Math.cos(a);
+    if (a === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+  }
+  ctx.stroke();
+
+  // Rolling circle center
+  const cx = startX + r * angle;
+  const cy = baseY - r;
+
+  // Circle
+  ctx.strokeStyle = COLORS.ink;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, TAU);
+  ctx.stroke();
+
+  // Circle interior dotted
+  ctx.fillStyle = 'rgba(26,24,20,0.03)';
+  ctx.fill();
+
+  // Point on circle
+  const px = cx - r * Math.sin(angle);
+  const py = cy + r * Math.cos(angle);
+
+  // Radius
+  ctx.strokeStyle = COLORS.accent2;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  ctx.lineTo(px, py);
+  ctx.stroke();
+
+  // Center dot
+  ctx.fillStyle = COLORS.ink;
+  ctx.beginPath();
+  ctx.arc(cx, cy, 3, 0, TAU);
+  ctx.fill();
+
+  // Contact point (where circle touches line)
+  ctx.fillStyle = COLORS.gold;
+  ctx.beginPath();
+  ctx.arc(cx, baseY, 4, 0, TAU);
+  ctx.fill();
+
+  // Tracing point
+  ctx.fillStyle = COLORS.accent;
+  ctx.beginPath();
+  ctx.arc(px, py, 5, 0, TAU);
+  ctx.fill();
+  ctx.strokeStyle = COLORS.paper;
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  // Normal from point to contact
+  ctx.strokeStyle = 'rgba(168,132,56,0.5)';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([3, 3]);
+  ctx.beginPath();
+  ctx.moveTo(px, py);
+  ctx.lineTo(cx, baseY);
+  ctx.stroke();
+  ctx.setLineDash([]);
+});
+
+document.getElementById('cyc-r').addEventListener('input', e => {
+  cycR = +e.target.value;
+  document.getElementById('v-cyc-r').textContent = cycR;
+});
+document.getElementById('cyc-s').addEventListener('input', e => {
+  cycAnim.speed = e.target.value / 10;
+  document.getElementById('v-cyc-s').textContent = cycAnim.speed.toFixed(1) + '×';
+});
+document.getElementById('cyc-play').addEventListener('click', e => {
+  cycAnim.toggle();
+  e.target.textContent = cycAnim.running ? '⏸ Pausa' : '▶ Reanudar';
+});
+document.getElementById('cyc-reset').addEventListener('click', () => cycAnim.reset());
+
+// ——————————————————————————————————————————————
+//  II. EPICICLOIDE
+// ——————————————————————————————————————————————
+let epiR = 90, epiR2 = 30;
+const epiCanvas = document.getElementById('cv-epi');
+const epiAnim = new Anim(epiCanvas, (t) => {
+  const { ctx, w, h } = setupCanvas(epiCanvas);
+  ctx.clearRect(0, 0, w, h);
+  drawGrid(ctx, w, h);
+
+  const cx = w / 2, cy = h / 2;
+  const R = epiR, r = epiR2;
+
+  // Fixed circle
+  ctx.strokeStyle = COLORS.accent2;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(cx, cy, R, 0, TAU);
+  ctx.stroke();
+
+  // Compute angle
+  const totalCycles = Math.max(2, r / Math.max(1, gcd(Math.round(R), Math.round(r))) * 0.5);
+  const maxAngle = TAU * (r === 0 ? 2 : Math.min(8, R / Math.max(1, gcd(Math.round(R), Math.round(r)))));
+  const angle = (t * 0.5) % maxAngle;
+
+  // Full faded trace
+  ctx.strokeStyle = 'rgba(180,56,42,0.2)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  for (let a = 0; a <= maxAngle; a += 0.01) {
+    const px = cx + (R + r) * Math.cos(a) - r * Math.cos((R + r) * a / r);
+    const py = cy + (R + r) * Math.sin(a) - r * Math.sin((R + r) * a / r);
+    if (a === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+  }
+  ctx.stroke();
+
+  // Active trace
+  ctx.strokeStyle = COLORS.accent;
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  for (let a = 0; a <= angle; a += 0.01) {
+    const px = cx + (R + r) * Math.cos(a) - r * Math.cos((R + r) * a / r);
+    const py = cy + (R + r) * Math.sin(a) - r * Math.sin((R + r) * a / r);
+    if (a === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+  }
+  ctx.stroke();
+
+  // Rolling circle center
+  const mcx = cx + (R + r) * Math.cos(angle);
+  const mcy = cy + (R + r) * Math.sin(angle);
+
+  // Rolling circle
+  ctx.strokeStyle = COLORS.ink;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(mcx, mcy, r, 0, TAU);
+  ctx.stroke();
+  ctx.fillStyle = 'rgba(26,24,20,0.03)';
+  ctx.fill();
+
+  // Tracing point
+  const px = cx + (R + r) * Math.cos(angle) - r * Math.cos((R + r) * angle / r);
+  const py = cy + (R + r) * Math.sin(angle) - r * Math.sin((R + r) * angle / r);
+
+  // Radius
+  ctx.strokeStyle = COLORS.accent2;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(mcx, mcy);
+  ctx.lineTo(px, py);
+  ctx.stroke();
+
+  // Centers and contact
+  ctx.fillStyle = COLORS.ink;
+  ctx.beginPath(); ctx.arc(cx, cy, 3, 0, TAU); ctx.fill();
+  ctx.beginPath(); ctx.arc(mcx, mcy, 3, 0, TAU); ctx.fill();
+
+  // Contact point
+  const conX = cx + R * Math.cos(angle);
+  const conY = cy + R * Math.sin(angle);
+  ctx.fillStyle = COLORS.gold;
+  ctx.beginPath(); ctx.arc(conX, conY, 4, 0, TAU); ctx.fill();
+
+  // Tracing point
+  ctx.fillStyle = COLORS.accent;
+  ctx.beginPath(); ctx.arc(px, py, 5, 0, TAU); ctx.fill();
+  ctx.strokeStyle = COLORS.paper; ctx.lineWidth = 1.5; ctx.stroke();
+});
+
+function gcd(a, b) { return b === 0 ? a : gcd(b, a % b); }
+
+document.getElementById('epi-R').addEventListener('input', e => {
+  epiR = +e.target.value;
+  document.getElementById('v-epi-R').textContent = epiR;
+});
+document.getElementById('epi-r').addEventListener('input', e => {
+  epiR2 = +e.target.value;
+  document.getElementById('v-epi-r').textContent = epiR2;
+});
+document.getElementById('epi-s').addEventListener('input', e => {
+  epiAnim.speed = e.target.value / 10;
+  document.getElementById('v-epi-s').textContent = epiAnim.speed.toFixed(1) + '×';
+});
+document.getElementById('epi-play').addEventListener('click', e => {
+  epiAnim.toggle();
+  e.target.textContent = epiAnim.running ? '⏸ Pausa' : '▶ Reanudar';
+});
+document.getElementById('epi-reset').addEventListener('click', () => epiAnim.reset());
+
+// ——————————————————————————————————————————————
+//  III. HIPOCICLOIDE
+// ——————————————————————————————————————————————
+let hypR = 120, hypR2 = 30;
+const hypCanvas = document.getElementById('cv-hypo');
+const hypAnim = new Anim(hypCanvas, (t) => {
+  const { ctx, w, h } = setupCanvas(hypCanvas);
+  ctx.clearRect(0, 0, w, h);
+  drawGrid(ctx, w, h);
+
+  const cx = w / 2, cy = h / 2;
+  const R = hypR, r = Math.min(hypR2, R - 5);
+
+  // Fixed circle
+  ctx.strokeStyle = COLORS.accent2;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(cx, cy, R, 0, TAU);
+  ctx.stroke();
+
+  const maxAngle = TAU * (r === 0 ? 2 : Math.min(8, R / Math.max(1, gcd(Math.round(R), Math.round(r)))));
+  const angle = (t * 0.5) % maxAngle;
+
+  // Faded full trace
+  ctx.strokeStyle = 'rgba(180,56,42,0.2)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  for (let a = 0; a <= maxAngle; a += 0.01) {
+    const px = cx + (R - r) * Math.cos(a) + r * Math.cos((R - r) * a / r);
+    const py = cy + (R - r) * Math.sin(a) - r * Math.sin((R - r) * a / r);
+    if (a === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+  }
+  ctx.stroke();
+
+  // Active trace
+  ctx.strokeStyle = COLORS.accent;
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  for (let a = 0; a <= angle; a += 0.01) {
+    const px = cx + (R - r) * Math.cos(a) + r * Math.cos((R - r) * a / r);
+    const py = cy + (R - r) * Math.sin(a) - r * Math.sin((R - r) * a / r);
+    if (a === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+  }
+  ctx.stroke();
+
+  // Rolling circle center (inside)
+  const mcx = cx + (R - r) * Math.cos(angle);
+  const mcy = cy + (R - r) * Math.sin(angle);
+
+  ctx.strokeStyle = COLORS.ink;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(mcx, mcy, r, 0, TAU);
+  ctx.stroke();
+  ctx.fillStyle = 'rgba(26,24,20,0.03)';
+  ctx.fill();
+
+  // Tracing point
+  const px = cx + (R - r) * Math.cos(angle) + r * Math.cos((R - r) * angle / r);
+  const py = cy + (R - r) * Math.sin(angle) - r * Math.sin((R - r) * angle / r);
+
+  // Radius
+  ctx.strokeStyle = COLORS.accent2;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(mcx, mcy);
+  ctx.lineTo(px, py);
+  ctx.stroke();
+
+  // Centers
+  ctx.fillStyle = COLORS.ink;
+  ctx.beginPath(); ctx.arc(cx, cy, 3, 0, TAU); ctx.fill();
+  ctx.beginPath(); ctx.arc(mcx, mcy, 3, 0, TAU); ctx.fill();
+
+  // Contact (on the inside of fixed circle)
+  const conX = cx + R * Math.cos(angle);
+  const conY = cy + R * Math.sin(angle);
+  ctx.fillStyle = COLORS.gold;
+  ctx.beginPath(); ctx.arc(conX, conY, 4, 0, TAU); ctx.fill();
+
+  ctx.fillStyle = COLORS.accent;
+  ctx.beginPath(); ctx.arc(px, py, 5, 0, TAU); ctx.fill();
+  ctx.strokeStyle = COLORS.paper; ctx.lineWidth = 1.5; ctx.stroke();
+});
+
+document.getElementById('hyp-R').addEventListener('input', e => {
+  hypR = +e.target.value;
+  document.getElementById('v-hyp-R').textContent = hypR;
+});
+document.getElementById('hyp-r').addEventListener('input', e => {
+  hypR2 = +e.target.value;
+  document.getElementById('v-hyp-r').textContent = hypR2;
+});
+document.getElementById('hyp-s').addEventListener('input', e => {
+  hypAnim.speed = e.target.value / 10;
+  document.getElementById('v-hyp-s').textContent = hypAnim.speed.toFixed(1) + '×';
+});
+document.getElementById('hyp-play').addEventListener('click', e => {
+  hypAnim.toggle();
+  e.target.textContent = hypAnim.running ? '⏸ Pausa' : '▶ Reanudar';
+});
+document.getElementById('hyp-reset').addEventListener('click', () => hypAnim.reset());
+
+// ——————————————————————————————————————————————
+//  IV. ENVOLVENTE
+// ——————————————————————————————————————————————
+let invR = 60;
+const invCanvas = document.getElementById('cv-inv');
+const invAnim = new Anim(invCanvas, (t) => {
+  const { ctx, w, h } = setupCanvas(invCanvas);
+  ctx.clearRect(0, 0, w, h);
+  drawGrid(ctx, w, h);
+
+  const cx = w * 0.4, cy = h * 0.55;
+  const r = invR;
+
+  // Base circle
+  ctx.strokeStyle = COLORS.accent2;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, TAU);
+  ctx.stroke();
+
+  // Center
+  ctx.fillStyle = COLORS.ink;
+  ctx.beginPath(); ctx.arc(cx, cy, 3, 0, TAU); ctx.fill();
+
+  const maxT = 5;
+  const tt = (t * 0.4) % (maxT + 1);
+  const param = Math.min(tt, maxT);
+
+  // Faded full involute
+  ctx.strokeStyle = 'rgba(180,56,42,0.2)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  for (let a = 0; a <= maxT; a += 0.02) {
+    const px = cx + r * (Math.cos(a) + a * Math.sin(a));
+    const py = cy - r * (Math.sin(a) - a * Math.cos(a));
+    if (a === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+  }
+  ctx.stroke();
+
+  // Active involute
+  ctx.strokeStyle = COLORS.accent;
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  for (let a = 0; a <= param; a += 0.02) {
+    const px = cx + r * (Math.cos(a) + a * Math.sin(a));
+    const py = cy - r * (Math.sin(a) - a * Math.cos(a));
+    if (a === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+  }
+  ctx.stroke();
+
+  // Tangent point on circle (where string leaves)
+  const tx = cx + r * Math.cos(param);
+  const ty = cy - r * Math.sin(param);
+
+  // Tip of string (=tracing point)
+  const px = cx + r * (Math.cos(param) + param * Math.sin(param));
+  const py = cy - r * (Math.sin(param) - param * Math.cos(param));
+
+  // Wrapped portion of string (highlight along base circle)
+  ctx.strokeStyle = COLORS.ink;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, -param, 0);
+  ctx.stroke();
+
+  // String (taut tangent)
+  ctx.strokeStyle = COLORS.ink;
+  ctx.lineWidth = 1.8;
+  ctx.beginPath();
+  ctx.moveTo(tx, ty);
+  ctx.lineTo(px, py);
+  ctx.stroke();
+
+  // Tangent point dot
+  ctx.fillStyle = COLORS.gold;
+  ctx.beginPath(); ctx.arc(tx, ty, 4, 0, TAU); ctx.fill();
+
+  // Tracing point
+  ctx.fillStyle = COLORS.accent;
+  ctx.beginPath(); ctx.arc(px, py, 5, 0, TAU); ctx.fill();
+  ctx.strokeStyle = COLORS.paper; ctx.lineWidth = 1.5; ctx.stroke();
+});
+
+document.getElementById('inv-r').addEventListener('input', e => {
+  invR = +e.target.value;
+  document.getElementById('v-inv-r').textContent = invR;
+});
+document.getElementById('inv-s').addEventListener('input', e => {
+  invAnim.speed = e.target.value / 10;
+  document.getElementById('v-inv-s').textContent = invAnim.speed.toFixed(1) + '×';
+});
+document.getElementById('inv-play').addEventListener('click', e => {
+  invAnim.toggle();
+  e.target.textContent = invAnim.running ? '⏸ Pausa' : '▶ Reanudar';
+});
+document.getElementById('inv-reset').addEventListener('click', () => invAnim.reset());
+
+// ——————————————————————————————————————————————
+//  V. ENGRANE — dos ruedas dentadas
+// ——————————————————————————————————————————————
+let z1 = 14, z2 = 22, alphaDeg = 20, profile = 'involute';
+
+// Generate one tooth flank (involute profile)
+function involutePoint(rb, t) {
+  return {
+    x: rb * (Math.cos(t) + t * Math.sin(t)),
+    y: rb * (Math.sin(t) - t * Math.cos(t))
+  };
+}
+
+// Build full gear shape (closed path) around origin, oriented at phase
+function buildInvoluteGear(z, m, alphaRad, phase) {
+  const rp = z * m / 2;        // pitch radius
+  const rb = rp * Math.cos(alphaRad);  // base radius
+  const ra = rp + m;           // addendum
+  const rf = Math.max(rb * 0.95, rp - 1.25 * m); // dedendum
+  const toothAngle = TAU / z;
+
+  // Find involute parameter where r = ra
+  // r(t) = rb*sqrt(1+t^2)
+  const tMax = Math.sqrt(Math.pow(ra / rb, 2) - 1);
+
+  // Pressure angle at pitch circle
+  const tPitch = Math.sqrt(Math.pow(rp / rb, 2) - 1);
+  // Half tooth thickness at base circle (in angle): pi/(2z) at pitch + inv(alpha)
+  const halfThicknessPitch = Math.PI / (2 * z);
+  const invAlpha = Math.tan(alphaRad) - alphaRad;
+  const halfThicknessBase = halfThicknessPitch + invAlpha;
+
+  const points = [];
+
+  for (let i = 0; i < z; i++) {
+    const center = i * toothAngle + phase;
+
+    // Right flank rising (from rf to ra)
+    const rightFlank = [];
+    // Below base circle: radial line
+    if (rf < rb) {
+      const a = center - halfThicknessBase;
+      rightFlank.push({ x: rf * Math.cos(a), y: rf * Math.sin(a) });
+    }
+    const N = 8;
+    for (let k = 0; k <= N; k++) {
+      const t = (k / N) * tMax;
+      const ip = involutePoint(rb, t);
+      // place flank: rotate so tooth axis is at center+0
+      const localAngle = -halfThicknessBase;
+      const cosA = Math.cos(center + localAngle), sinA = Math.sin(center + localAngle);
+      const x = ip.x * cosA - ip.y * sinA;
+      const y = ip.x * sinA + ip.y * cosA;
+      rightFlank.push({ x, y });
+    }
+
+    // Tip arc from right flank end to left flank end
+    // Determine angles
+    // After rotation, the flank starts radially, ends at (ra, ?)
+    // Easier: angular position of flank tip on the gear
+    const tipAngleOffset = Math.atan2(involutePoint(rb, tMax).y, involutePoint(rb, tMax).x);
+    const rightTipAngle = center - halfThicknessBase + tipAngleOffset;
+    const leftTipAngle = center + halfThicknessBase - tipAngleOffset;
+
+    points.push(...rightFlank);
+
+    // Tip arc
+    const tipSteps = 5;
+    for (let k = 1; k <= tipSteps; k++) {
+      const a = rightTipAngle + (leftTipAngle - rightTipAngle) * (k / tipSteps);
+      points.push({ x: ra * Math.cos(a), y: ra * Math.sin(a) });
+    }
+
+    // Left flank descending (mirror)
+    const leftFlank = [];
+    for (let k = N; k >= 0; k--) {
+      const t = (k / N) * tMax;
+      const ip = involutePoint(rb, t);
+      // Mirror: y -> -y, then rotate
+      const localAngle = halfThicknessBase;
+      const cosA = Math.cos(center + localAngle), sinA = Math.sin(center + localAngle);
+      const x = ip.x * cosA - (-ip.y) * sinA;
+      const y = ip.x * sinA + (-ip.y) * cosA;
+      leftFlank.push({ x, y });
+    }
+    if (rf < rb) {
+      const a = center + halfThicknessBase;
+      leftFlank.push({ x: rf * Math.cos(a), y: rf * Math.sin(a) });
+    }
+    points.push(...leftFlank);
+
+    // Root arc to next tooth
+    const rootStartAngle = center + halfThicknessBase;
+    const rootEndAngle = (i + 1) * toothAngle + phase - halfThicknessBase;
+    const rootSteps = 5;
+    for (let k = 1; k <= rootSteps; k++) {
+      const a = rootStartAngle + (rootEndAngle - rootStartAngle) * (k / rootSteps);
+      points.push({ x: rf * Math.cos(a), y: rf * Math.sin(a) });
+    }
+  }
+
+  return { points, rp, rb, ra, rf };
+}
+
+// Cycloidal gear: simpler approximation - sinusoidal-like teeth
+function buildCycloidalGear(z, m, phase) {
+  const rp = z * m / 2;
+  const ra = rp + m;
+  const rf = rp - 1.25 * m;
+  const rgen = m / 2; // generating circle radius (common practice)
+  const toothAngle = TAU / z;
+  const points = [];
+  const steps = 28;
+
+  for (let i = 0; i < z; i++) {
+    for (let k = 0; k < steps; k++) {
+      const localT = k / steps; // 0..1 over one tooth
+      const a = i * toothAngle + phase + localT * toothAngle;
+      // Tooth profile: radius oscillates between rf and ra via sinusoid + cusps
+      // half tooth: hipocicloide (rf to rp), other half: epicicloide (rp to ra), then symmetric
+      let r;
+      if (localT < 0.25) {
+        // Rising flank: hipo from rf to rp, then epi from rp to ra
+        const u = localT / 0.25;
+        // Combine: looks like smoothed cycloidal flank
+        r = rf + (ra - rf) * (0.5 - 0.5 * Math.cos(Math.PI * u));
+      } else if (localT < 0.5) {
+        const u = (localT - 0.25) / 0.25;
+        r = ra; // tip dwell shortened
+        if (u < 0.5) r = rf + (ra - rf) * (0.5 + 0.5 * Math.cos(Math.PI * (u))); 
+        else r = ra - (ra - rp) * 0.05 * (u - 0.5) * 2;
+      } else if (localT < 0.75) {
+        const u = (localT - 0.5) / 0.25;
+        r = ra - (ra - rf) * (0.5 - 0.5 * Math.cos(Math.PI * u));
+      } else {
+        const u = (localT - 0.75) / 0.25;
+        r = rf;
+      }
+      // Smoother: just use a clean cycloidal-like cosine modulation
+      const phaseT = localT * TAU;
+      r = (rf + ra) / 2 + (ra - rf) / 2 * Math.cos(phaseT);
+      points.push({ x: r * Math.cos(a), y: r * Math.sin(a) });
+    }
+  }
+  return { points, rp, ra, rf, rb: rp * 0.94 };
+}
+
+function drawGearPath(ctx, gear, cx, cy) {
+  ctx.beginPath();
+  gear.points.forEach((p, i) => {
+    const x = cx + p.x;
+    const y = cy + p.y;
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  });
+  ctx.closePath();
+}
+
+const gearsCanvas = document.getElementById('cv-gears');
+const gearsAnim = new Anim(gearsCanvas, (t) => {
+  const { ctx, w, h } = setupCanvas(gearsCanvas);
+  ctx.clearRect(0, 0, w, h);
+  drawGrid(ctx, w, h);
+
+  // Compute module so gears fit
+  const alphaRad = alphaDeg * Math.PI / 180;
+  const totalRadius = (z1 + z2) / 2;
+  const margin = 50;
+  const m = (Math.min(w, h) / 2 - margin) / (totalRadius * 0.5 + 1);
+  const rp1 = z1 * m / 2;
+  const rp2 = z2 * m / 2;
+
+  const x1 = w / 2 - rp2 / (rp1 + rp2) * (rp1 + rp2);
+  const x2 = w / 2 + rp1 / (rp1 + rp2) * (rp1 + rp2);
+  // Easier: place pinion left, gear right, with pitch point at center
+  const cx1 = w / 2 - rp1;
+  const cy1 = h / 2;
+  const cx2 = w / 2 + rp2;
+  const cy2 = h / 2;
+  const px = w / 2; // pitch point x
+  const py = h / 2;
+
+  // Phases (gears rotate opposite directions, with z1/z2 ratio)
+  const phase1 = t * 0.6;
+  const phase2 = -phase1 * z1 / z2;
+
+  // Adjust phase so teeth mesh: tooth of pinion at angle 0 meets gap of gear at angle PI
+  // For involute: the meshing condition requires phase offset
+  let meshOffset = 0;
+  if (profile === 'involute') {
+    // Half tooth angle on each
+    meshOffset = Math.PI / z2 + Math.PI; // base alignment + opposite side
+  } else {
+    meshOffset = Math.PI / z2 + Math.PI;
+  }
+
+  let g1, g2;
+  if (profile === 'involute') {
+    g1 = buildInvoluteGear(z1, m, alphaRad, phase1);
+    g2 = buildInvoluteGear(z2, m, alphaRad, phase2 + meshOffset);
+  } else {
+    g1 = buildCycloidalGear(z1, m, phase1);
+    g2 = buildCycloidalGear(z2, m, phase2 + meshOffset);
+  }
+
+  // Draw pitch circles
+  ctx.strokeStyle = COLORS.gold;
+  ctx.lineWidth = 1;
+  ctx.setLineDash([4, 4]);
+  ctx.beginPath(); ctx.arc(cx1, cy1, g1.rp, 0, TAU); ctx.stroke();
+  ctx.beginPath(); ctx.arc(cx2, cy2, g2.rp, 0, TAU); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Draw base/generating circles
+  ctx.strokeStyle = 'rgba(44, 95, 93, 0.4)';
+  ctx.lineWidth = 0.8;
+  ctx.setLineDash([2, 3]);
+  ctx.beginPath(); ctx.arc(cx1, cy1, g1.rb, 0, TAU); ctx.stroke();
+  ctx.beginPath(); ctx.arc(cx2, cy2, g2.rb, 0, TAU); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Draw gears
+  ctx.fillStyle = 'rgba(26, 24, 20, 0.85)';
+  ctx.strokeStyle = COLORS.ink;
+  ctx.lineWidth = 1;
+
+  drawGearPath(ctx, g1, cx1, cy1);
+  ctx.fill(); ctx.stroke();
+
+  drawGearPath(ctx, g2, cx2, cy2);
+  ctx.fill(); ctx.stroke();
+
+  // Hub holes
+  ctx.fillStyle = COLORS.paper;
+  ctx.beginPath(); ctx.arc(cx1, cy1, m * 1.5, 0, TAU); ctx.fill();
+  ctx.strokeStyle = COLORS.ink; ctx.lineWidth = 1; ctx.stroke();
+  ctx.beginPath(); ctx.arc(cx2, cy2, m * 1.5, 0, TAU); ctx.fill();
+  ctx.stroke();
+
+  // Center marks
+  ctx.fillStyle = COLORS.ink;
+  ctx.beginPath(); ctx.arc(cx1, cy1, 2, 0, TAU); ctx.fill();
+  ctx.beginPath(); ctx.arc(cx2, cy2, 2, 0, TAU); ctx.fill();
+
+  // Pitch point P
+  ctx.fillStyle = COLORS.gold;
+  ctx.beginPath(); ctx.arc(px, py, 5, 0, TAU); ctx.fill();
+  ctx.strokeStyle = COLORS.paper; ctx.lineWidth = 1.5; ctx.stroke();
+  ctx.fillStyle = COLORS.ink;
+  ctx.font = "italic 14px 'Cormorant Garamond'";
+  ctx.fillText('P', px + 8, py - 8);
+
+  // Line of action
+  if (profile === 'involute') {
+    // Line through P at angle alpha to the common tangent (vertical)
+    // Common tangent at P is vertical; line of action makes angle alpha with vertical
+    const len = Math.max(rp1, rp2) * 1.5;
+    const dx = Math.sin(alphaRad);
+    const dy = Math.cos(alphaRad);
+    ctx.strokeStyle = COLORS.accent;
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([6, 4]);
+    ctx.beginPath();
+    ctx.moveTo(px - dx * len, py - dy * len);
+    ctx.lineTo(px + dx * len, py + dy * len);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Mark angle alpha
+    ctx.strokeStyle = 'rgba(180, 56, 42, 0.5)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(px, py, 24, -Math.PI / 2, -Math.PI / 2 + alphaRad);
+    ctx.stroke();
+    ctx.fillStyle = COLORS.accent;
+    ctx.font = "italic 13px 'Cormorant Garamond'";
+    ctx.fillText('α', px + 6, py - 30);
+  } else {
+    // Cycloidal: line of action is curved (arc through pitch point)
+    // For visualization, draw the generating circle at P
+    const rgen = m / 2;
+    ctx.strokeStyle = COLORS.accent;
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.arc(px, py, rgen * 4, 0, TAU);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = COLORS.accent;
+    ctx.font = "italic 12px 'Cormorant Garamond'";
+    ctx.fillText('línea de acción curva', px + rgen * 4 + 8, py + 4);
+  }
+
+  // Common tangent at P (vertical dashed reference)
+  ctx.strokeStyle = 'rgba(26, 24, 20, 0.2)';
+  ctx.lineWidth = 0.8;
+  ctx.setLineDash([2, 4]);
+  ctx.beginPath();
+  ctx.moveTo(px, py - 60);
+  ctx.lineTo(px, py + 60);
+  ctx.stroke();
+  ctx.setLineDash([]);
+});
+
+document.getElementById('z1').addEventListener('input', e => {
+  z1 = +e.target.value;
+  document.getElementById('v-z1').textContent = z1;
+});
+document.getElementById('z2').addEventListener('input', e => {
+  z2 = +e.target.value;
+  document.getElementById('v-z2').textContent = z2;
+});
+document.getElementById('alpha').addEventListener('input', e => {
+  alphaDeg = +e.target.value;
+  document.getElementById('v-alpha').textContent = alphaDeg + '°';
+});
+document.getElementById('gs').addEventListener('input', e => {
+  gearsAnim.speed = e.target.value / 10;
+  document.getElementById('v-gs').textContent = gearsAnim.speed.toFixed(1) + '×';
+});
+document.getElementById('gears-play').addEventListener('click', e => {
+  gearsAnim.toggle();
+  e.target.textContent = gearsAnim.running ? '⏸ Pausa' : '▶ Reanudar';
+});
+document.getElementById('gears-reset').addEventListener('click', () => gearsAnim.reset());
+
+document.querySelectorAll('.radio-option').forEach(opt => {
+  opt.addEventListener('click', () => {
+    document.querySelectorAll('.radio-option').forEach(o => o.classList.remove('active'));
+    opt.classList.add('active');
+    profile = opt.dataset.profile;
+    const note = document.getElementById('gears-note');
+    const formula = document.getElementById('gears-formula');
+    if (profile === 'involute') {
+      note.innerHTML = 'En el perfil de <strong>envolvente</strong>, la línea de acción es una <em>recta fija</em> tangente a ambos círculos base. La normal al contacto pasa siempre por el punto primitivo P — ley fundamental satisfecha.';
+      formula.innerHTML = 'Línea de acción tangente a los círculos base<br>i = z₂ / z₁ = constante';
+    } else {
+      note.innerHTML = 'En el perfil <strong>cicloidal</strong>, la línea de acción es <em>curva</em> (recorre el círculo generador común). Excelente comportamiento si la distancia entre centros es exacta — pero <strong>cualquier desviación rompe la ley fundamental</strong>.';
+      formula.innerHTML = 'Línea de acción curva — círculo generador<br>contacto convexo–cóncavo';
+    }
+  });
+});
+
+// ——————————————————————————————————————————————
+//  Resize handling
+// ——————————————————————————————————————————————
+function resizeAll() {
+  // Force redraw - canvases will resize on next frame via setupCanvas
+}
+window.addEventListener('resize', resizeAll);
+
+</script>
+</body>
+</html>
